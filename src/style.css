@@ -1,0 +1,32 @@
+:root {
+  --n-color: #ffffff;
+  --n-color-embedded: #f8fafc;
+  --n-color-hover: #f1f5f9;
+  --n-border-color: #e2e8f0;
+  --n-text-color: #0f172a;
+  --n-text-color-secondary: #475569;
+  --n-text-color-disabled: #94a3b8;
+
+  --n-primary-color: #2563eb;
+  --n-primary-color-suppl: #dbeafe;
+  --n-success-color: #059669;
+  --n-success-color-suppl: #d1fae5;
+  --n-error-color: #dc2626;
+  --n-error-color-suppl: #fee2e2;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--n-color-embedded);
+  color: var(--n-text-color);
+  line-height: 1.6;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
