@@ -6,6 +6,7 @@
     :totalQuestions="totalQuestions"
     :correctAnswer="correctAnswer"
     :feedback="feedback"
+    case-insensitive
     ref="exerciseRef"
     @answered="$emit('answered', $event)"
   >

@@ -12,7 +12,7 @@
     <template #content>
       <n-p style="margin-bottom: 16px;">Соедините термины с их определениями:</n-p>
 
-      <n-grid :cols="2" :x-gap="24">
+      <n-grid :cols="'1 s:2'" :x-gap="24" :y-gap="12" responsive="screen">
         <n-grid-item>
           <n-space vertical size="small">
             <n-card
@@ -24,13 +24,13 @@
               :class="{
                 'match-selected': selectedLeft === index,
                 'match-matched': matchedLeft[index] !== undefined,
-                'match-correct': matchedLeft[index] !== undefined && matchedLeft[index] === correctAnswer[index],
-                'match-incorrect': matchedLeft[index] !== undefined && matchedLeft[index] !== correctAnswer[index]
+                'match-correct': exerciseRef?.isAnswered && matchedLeft[index] !== undefined && matchedLeft[index] === correctAnswer[index],
+                'match-incorrect': exerciseRef?.isAnswered && matchedLeft[index] !== undefined && matchedLeft[index] !== correctAnswer[index]
               }"
               @click="selectLeft(index)"
             >
               <n-space justify="space-between" align="center">
-                <span>{{ index + 1 }}. {{ item }}</span>
+                <span class="match-label">{{ index + 1 }}. {{ item }}</span>
                 <n-tag v-if="matchedLeft[index] !== undefined" size="small" type="success">
                   → {{ rightItems[matchedLeft[index]] }}
                 </n-tag>
@@ -175,6 +175,21 @@ watch(matchedLeft, () => {
 .match-card {
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.match-card .match-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.match-card :deep(.n-tag) {
+  max-width: 100%;
+  height: auto;
+  padding: 2px 8px;
+  white-space: normal;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .match-card:hover {

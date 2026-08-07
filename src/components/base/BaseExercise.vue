@@ -59,13 +59,15 @@ interface Props {
   correctAnswer: any
   feedback?: string
   autoCheck?: boolean
+  caseInsensitive?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   mode: 'inline',
   questionIndex: 0,
   totalQuestions: 1,
-  autoCheck: false
+  autoCheck: false,
+  caseInsensitive: false
 })
 
 const emit = defineEmits<{
@@ -76,9 +78,31 @@ const emit = defineEmits<{
 const isAnswered = ref(false)
 const userAnswer = ref<any>(null)
 
+function normalizeValue(v: any): any {
+  if (props.caseInsensitive && typeof v === 'string') return v.trim().toLowerCase()
+  if (props.caseInsensitive && Array.isArray(v)) return v.map(x => (typeof x === 'string' ? x.trim().toLowerCase() : x))
+  return v
+}
+
+function deepEqual(a: any, b: any): boolean {
+  if (a === b) return true
+  if (a === null || a === undefined || b === null || b === undefined) return false
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false
+    return a.every((v, i) => deepEqual(v, b[i]))
+  }
+  if (typeof a === 'object' && typeof b === 'object') {
+    const aKeys = Object.keys(a).sort()
+    const bKeys = Object.keys(b).sort()
+    if (aKeys.length !== bKeys.length) return false
+    return aKeys.every(k => Object.prototype.hasOwnProperty.call(b, k) && deepEqual(a[k], b[k]))
+  }
+  return false
+}
+
 const isCorrect = computed(() => {
   if (userAnswer.value === null || userAnswer.value === undefined) return false
-  return JSON.stringify(userAnswer.value) === JSON.stringify(props.correctAnswer)
+  return deepEqual(normalizeValue(userAnswer.value), normalizeValue(props.correctAnswer))
 })
 
 const canSubmit = computed(() => {
