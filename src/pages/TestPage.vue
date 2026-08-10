@@ -2,12 +2,16 @@
   <n-card :bordered="true" style="max-width: 900px; margin: 0 auto;">
     <template #header>
       <n-h2 style="margin: 0 0 12px 0;">Тест: {{ article?.title }}</n-h2>
-      <n-grid :cols="2" :x-gap="16">
+      <n-grid :cols="'1 s:2'" :x-gap="16" responsive="screen">
         <n-grid-item>
-          <n-statistic label="Прогресс" :value="Math.round(progress)" suffix="%" />
+          <n-statistic label="Прогресс" :value="Math.round(progress)">
+            <template #suffix>%</template>
+          </n-statistic>
         </n-grid-item>
         <n-grid-item>
-          <n-statistic label="Вопрос" :value="currentIndex + 1" :suffix="` / ${exercises.length}`" />
+          <n-statistic label="Вопрос" :value="currentIndex + 1">
+            <template #suffix> / {{ exercises.length }}</template>
+          </n-statistic>
         </n-grid-item>
       </n-grid>
       <n-progress
@@ -28,10 +32,9 @@
         :questionIndex="currentIndex"
         :totalQuestions="exercises.length"
         @answered="handleAnswer"
-        ref="currentExerciseRef"
       />
 
-      <n-space justify="space-between" style="margin-top: 24px;">
+      <n-space justify="space-between" wrap class="test-nav" style="margin-top: 24px;">
         <n-button @click="previousQuestion" :disabled="currentIndex === 0">
           ← Назад
         </n-button>
@@ -67,7 +70,7 @@
         </n-p>
       </n-card>
 
-      <n-grid :cols="3" :x-gap="16" style="margin-bottom: 24px;">
+      <n-grid :cols="'1 s:3'" :x-gap="16" responsive="screen" style="margin-bottom: 24px;">
         <n-grid-item>
           <n-card size="small" style="text-align: center; background: var(--n-success-color-suppl); border-color: var(--n-success-color);">
             <n-p style="font-size: 12px; color: var(--n-text-color-secondary);">✅ Правильно</n-p>
@@ -97,7 +100,7 @@
         <p v-else>Рекомендуем перечитать статью и попробовать еще раз.</p>
       </n-alert>
 
-      <n-space justify="center" size="large">
+      <n-space justify="center" size="large" wrap class="test-result-actions">
         <n-button @click="resetTest">Пройти заново</n-button>
         <n-button type="primary" @click="goToArticle">Вернуться к статье</n-button>
       </n-space>
@@ -131,7 +134,6 @@ const article = computed(() => {
 
 const exercises = computed(() => article.value?.exercises || [])
 const testCompleted = ref(false)
-const currentExerciseRef = ref()
 
 const currentIndex = computed({
   get: () => exerciseStore.currentQuestionIndex,
@@ -208,3 +210,29 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.test-nav {
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .test-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .test-nav .n-button {
+    width: 100%;
+  }
+
+  .test-result-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .test-result-actions .n-button {
+    width: 100%;
+  }
+}
+</style>
