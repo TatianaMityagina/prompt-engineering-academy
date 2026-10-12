@@ -14,12 +14,20 @@ const DEFAULT_BASE_URLS: Record<AiSettings['provider'], string> = {
   custom: 'https://api.openai.com/v1',
 }
 
+const DEFAULT_EMBEDDING_MODELS: Record<AiSettings['provider'], string> = {
+  openai: 'text-embedding-3-small',
+  openrouter: 'openai/text-embedding-3-small',
+  ollama: 'nomic-embed-text',
+  custom: '',
+}
+
 export function defaultSettings(provider: AiSettings['provider']): AiSettings {
   return {
     provider,
     baseUrl: DEFAULT_BASE_URLS[provider],
     apiKey: '',
     model: DEFAULT_MODELS[provider],
+    embeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
   }
 }
 
@@ -45,11 +53,21 @@ export function normalizeSettings(settings: AiSettings): AiSettings {
   return { ...settings, baseUrl, model }
 }
 
-export async function chatCompletion(
+const EMPTY_RETRY_DELAY_MS = 1500
+const MAX_RETRY_TOKENS = 6000
+
+interface CompletionOutcome {
+  content: string
+  finishReason?: string
+  hadReasoning: boolean
+}
+
+async function requestCompletion(
   settings: AiSettings,
   messages: ChatMessage[],
-  opts: { temperature?: number; maxTokens?: number } = {},
-): Promise<string> {
+  temperature: number,
+  maxTokens: number,
+): Promise<CompletionOutcome> {
   const { baseUrl, apiKey, model } = normalizeSettings(settings)
   const url = `${baseUrl}/chat/completions`
   const headers: Record<string, string> = {
@@ -67,8 +85,8 @@ export async function chatCompletion(
       body: JSON.stringify({
         model,
         messages,
-        temperature: opts.temperature ?? 0.4,
-        max_tokens: opts.maxTokens ?? 3500,
+        temperature,
+        max_tokens: maxTokens,
         stream: false,
       }),
     })
@@ -91,11 +109,38 @@ export async function chatCompletion(
   }
 
   const data = await res.json()
-  const content = data?.choices?.[0]?.message?.content
-  if (typeof content !== 'string' || !content.trim()) {
-    throw new Error('Пустой ответ от модели.')
+  const choice = data?.choices?.[0]
+  const content = choice?.message?.content
+  return {
+    content: typeof content === 'string' ? content : '',
+    finishReason: choice?.finish_reason,
+    // reasoning / reasoning_content — признак reasoning-модели
+    hadReasoning: !!(choice?.message?.reasoning || choice?.message?.reasoning_content),
   }
-  return content
+}
+
+/** Один повтор при пустом ответе с увеличенным max_tokens: reasoning-модель может исчерпать лимит на рассуждение. */
+export async function chatCompletion(
+  settings: AiSettings,
+  messages: ChatMessage[],
+  opts: { temperature?: number; maxTokens?: number } = {},
+): Promise<string> {
+  const temperature = opts.temperature ?? 0.4
+  const maxTokens = opts.maxTokens ?? 3500
+  const first = await requestCompletion(settings, messages, temperature, maxTokens)
+  if (first.content.trim()) return first.content
+
+  console.warn('[ai] пустой ответ модели', { finishReason: first.finishReason, hadReasoning: first.hadReasoning, maxTokens })
+  await new Promise(r => setTimeout(r, EMPTY_RETRY_DELAY_MS))
+  const retryTokens = Math.min(MAX_RETRY_TOKENS, Math.max(maxTokens * 3, 1000))
+  const second = await requestCompletion(settings, messages, temperature, retryTokens)
+  if (second.content.trim()) return second.content
+
+  console.warn('[ai] пустой ответ и после повтора', { finishReason: second.finishReason, hadReasoning: second.hadReasoning, retryTokens })
+  const why = second.finishReason === 'length' && second.hadReasoning
+    ? ' Похоже, reasoning-модель израсходовала лимит токенов на рассуждение — попробуйте другую модель.'
+    : ''
+  throw new Error(`Пустой ответ от модели (дважды).${why}`)
 }
 
 export async function testConnection(settings: AiSettings): Promise<string> {

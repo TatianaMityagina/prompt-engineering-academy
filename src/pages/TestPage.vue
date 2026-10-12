@@ -116,6 +116,8 @@ import {
   NGrid, NGridItem, NStatistic, NProgress, NAlert
 } from 'naive-ui'
 import { useExerciseStore } from '../store/exerciseStore'
+import { useLearnerStore } from '../store/learnerStore'
+import { articleTopic, exerciseQuestionText, inlineExerciseProps, sectionForTestQuestion } from '../services/rag/sections'
 import { articles } from '../data/articles'
 import MultipleChoice from '../components/exercises/MultipleChoice.vue'
 import TrueFalse from '../components/exercises/TrueFalse.vue'
@@ -127,6 +129,7 @@ import PromptBuilder from '../components/exercises/PromptBuilder.vue'
 const route = useRoute()
 const router = useRouter()
 const exerciseStore = useExerciseStore()
+const learner = useLearnerStore()
 
 const article = computed(() => {
   return articles.find(a => a.slug === route.params.slug as string)
@@ -169,6 +172,17 @@ const getComponent = (name: string) => {
 
 const handleAnswer = (isCorrect: boolean) => {
   exerciseStore.submitAnswer(currentIndex.value, isCorrect)
+  const a = article.value
+  if (!a) return
+  const section = sectionForTestQuestion(a, currentIndex.value)
+  const props = { ...inlineExerciseProps(a, currentIndex.value), ...exercise.value?.props }
+  learner.recordAnswer({
+    source: 'test',
+    topic: articleTopic(a, section),
+    route: `/article/${a.slug}${section ? `#${section.id}` : ''}`,
+    correct: isCorrect,
+    question: exerciseQuestionText(props) || 'Вопрос теста',
+  })
 }
 
 const nextQuestion = () => {

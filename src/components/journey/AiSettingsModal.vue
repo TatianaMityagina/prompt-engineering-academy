@@ -2,7 +2,7 @@
   <n-modal
     :show="show"
     preset="card"
-    :title="'⚙️ Генерация через ИИ'"
+    :title="'⚙️ Подключение ИИ'"
     style="width: 560px; max-width: 92vw;"
     @update:show="$emit('update:show', $event)"
   >
@@ -10,6 +10,11 @@
       Knowledge Journey умеет генерировать путешествия через любую OpenAI-совместимую модель
       (OpenAI, OpenRouter, Ollama и др.). Для Ollama и своего сервера ключ не нужен.
       Без настроенного ИИ работает встроенный локальный генератор — он не требует сети.
+    </n-p>
+    <n-p style="margin-bottom: 12px; color: var(--n-text-color-secondary); font-size: 13px;">
+      Модель используется в ассистенте по материалам, «Объясни проще», анализе прогресса и генерации тренировок.
+      Модель эмбеддингов включает семантический поиск (вместе с BM25); если провайдер её не поддерживает —
+      оставьте поле пустым.
     </n-p>
 
     <n-form label-placement="left" label-width="120">
@@ -33,6 +38,9 @@
       </n-form-item>
       <n-form-item label="Модель">
         <n-input v-model:value="settings.model" placeholder="gpt-4o-mini" />
+      </n-form-item>
+      <n-form-item label="Эмбеддинги">
+        <n-input v-model:value="settings.embeddingModel" placeholder="text-embedding-3-small (пусто — только BM25)" />
       </n-form-item>
     </n-form>
 

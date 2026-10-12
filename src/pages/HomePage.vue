@@ -22,6 +22,35 @@
       </div>
     </n-card>
 
+    <n-card class="next-card">
+      <template #header>
+        <div class="next-head">
+          <n-h3 style="margin: 0;">🧩 Что изучить дальше</n-h3>
+          <n-space size="small">
+            <n-button size="small" secondary type="primary" @click="ui.openAsk()">🔎 Спросить по материалам</n-button>
+            <n-button size="small" @click="$router.push('/progress')">📈 Мой прогресс</n-button>
+          </n-space>
+        </div>
+      </template>
+      <div class="next-list">
+        <div
+          v-for="rec in learner.recommendations"
+          :key="rec.route + rec.title"
+          class="next-item"
+          @click="$router.push(rec.route)"
+        >
+          <span class="next-icon">{{ REC_ICON[rec.kind] }}</span>
+          <div>
+            <div class="next-title">{{ rec.title }}</div>
+            <n-text depth="3" class="next-reason">{{ rec.reason }}</n-text>
+          </div>
+        </div>
+        <n-text v-if="!learner.recommendations.length" depth="3">
+          Всё прочитано и пройдено 🎉 Создай Journey по новой теме или спроси ассистента.
+        </n-text>
+      </div>
+    </n-card>
+
     <n-h2 style="margin: 8px 0 0;">📚 Cтатьи с упражнениями</n-h2>
     <n-grid :x-gap="24" :y-gap="24" cols="1 s:2 m:3" responsive="screen">
       <n-grid-item v-for="article in articles" :key="article.id">
@@ -33,8 +62,9 @@
           @click="goToArticle(article.slug)"
         >
           <template #header-extra>
+            <n-tag v-if="readSlugs.has(article.slug)" size="small" :bordered="false" style="margin-right: 6px;">✓ прочитано</n-tag>
             <n-tag v-if="article.exercises.length" type="success" size="small">
-              {{ article.exercises.length }} упражнений
+              {{ plural(article.exercises.length, ['упражнение', 'упражнения', 'упражнений']) }}
             </n-tag>
           </template>
           <n-p style="color: var(--n-text-color-secondary);">
@@ -57,11 +87,20 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { NSpace, NCard, NH1, NH2, NP, NGrid, NGridItem, NTag, NButton } from 'naive-ui'
+import { NSpace, NCard, NH1, NH2, NH3, NP, NText, NGrid, NGridItem, NTag, NButton } from 'naive-ui'
 import { articles } from '../data/articles'
+import { plural } from '../utils/plural'
+import { useLearnerStore, type Recommendation } from '../store/learnerStore'
+import { useUiStore } from '../store/uiStore'
 
 const router = useRouter()
+const learner = useLearnerStore()
+const ui = useUiStore()
+
+const REC_ICON: Record<Recommendation['kind'], string> = { repeat: '🔁', read: '📖', test: '📝', journey: '🧭' }
+const readSlugs = computed(() => new Set(learner.data.reading.map(r => r.slug)))
 
 const goToArticle = (slug: string) => {
   router.push(`/article/${slug}`)
@@ -119,6 +158,48 @@ const goToTest = (slug: string) => {
   --n-button-border-hover: none;
   --n-button-border-pressed: none;
   font-weight: 700;
+}
+
+.next-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.next-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.next-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--n-border-color);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.next-item:hover {
+  border-color: var(--n-primary-color);
+}
+
+.next-icon {
+  font-size: 20px;
+}
+
+.next-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.next-reason {
+  font-size: 12px;
 }
 
 .article-card {
