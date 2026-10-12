@@ -9,6 +9,7 @@ import type {
   Journey,
   JourneyResult,
 } from '../types/journey'
+import { useLearnerStore } from './learnerStore'
 
 const KEY_JOURNEYS = 'kj_journeys'
 const KEY_PROFILE = 'kj_profile'
@@ -461,6 +462,7 @@ export const useJourneyStore = defineStore('kj-journey', () => {
       // ignore
     }
     persistProfile()
+    useLearnerStore().recordJourney(run.journey, result)
     activeRun.value = null
     localStorage.removeItem(KEY_ACTIVE)
     lastResult.value = result

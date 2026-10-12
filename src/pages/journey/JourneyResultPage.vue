@@ -78,6 +78,12 @@
               <div v-for="s in review.strengths" :key="s" class="review-strength">✅ {{ s }}</div>
               <div v-for="i in review.improvements" :key="i" class="review-improvement">📖 {{ i }}</div>
             </n-space>
+            <ExplainPanel
+              v-if="review.score < 70 && checkpointOf(review.checkpointId)"
+              :fragment="checkpointOf(review.checkpointId)!.summary"
+              :topic="`${journey!.title} → ${review.title}`"
+              :route="`/journeys/${journey!.id}`"
+            />
           </div>
         </n-space>
       </n-card>
@@ -118,6 +124,7 @@
           <n-button type="primary" @click="downloadMarkdown">⬇ Скачать .md</n-button>
           <n-button @click="printPage">🖨 Печать / PDF</n-button>
           <n-button @click="retry">🔄 Пройти заново</n-button>
+          <n-button v-if="hasWeak" type="warning" secondary @click="$router.push('/progress')">🎯 Тренировка по ошибкам</n-button>
         </n-space>
       </n-card>
     </n-space>
@@ -138,6 +145,7 @@ import {
   NAlert, NButton, NCollapse, NCollapseItem, NEmpty, NTooltip,
 } from 'naive-ui'
 import { useJourneyStore } from '../../store/journeyStore'
+import ExplainPanel from '../../components/ai/ExplainPanel.vue'
 import type { ActivityType, JourneyResult } from '../../types/journey'
 
 const route = useRoute()
@@ -157,6 +165,10 @@ const overallScore = computed(() => {
 })
 
 const correctCount = computed(() => result.value?.activities.filter(a => a.correct).length || 0)
+
+const journey = computed(() => journeyStore.journeys.find(j => j.id === result.value?.journeyId) || null)
+const checkpointOf = (id: string) => journey.value?.checkpoints.find(c => c.id === id) || null
+const hasWeak = computed(() => !!result.value?.conceptReviews.some(r => r.score < 70))
 
 const profileAchievements = computed(() => journeyStore.profile.achievements)
 

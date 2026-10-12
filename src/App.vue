@@ -7,16 +7,27 @@
           <span class="brand" @click="$router.push('/')">
             🎯 <span class="brand-text">Prompt Academy</span>
           </span>
-          <n-button text @click="$router.push('/')">
-            <template #icon>🏠</template>
-            Главная
-          </n-button>
+          <nav class="header-nav">
+            <n-button class="ask-trigger" secondary type="primary" @click="ui.openAsk()">
+              🔎 <span class="nav-label">Спросить</span>
+              <kbd class="kbd">{{ isMac ? '⌘' : 'Ctrl' }} K</kbd>
+            </n-button>
+            <n-button text @click="$router.push('/journeys')">🧭 <span class="nav-label">Journey</span></n-button>
+            <n-button text @click="$router.push('/progress')">📈 <span class="nav-label">Прогресс</span></n-button>
+            <n-button text @click="ui.settingsOpen = true">
+              ⚙️ <span class="nav-label">ИИ</span>
+              <span class="ai-dot" :class="{ on: settings.hasAi }" />
+            </n-button>
+          </nav>
         </div>
       </n-layout-header>
 
       <n-layout-content class="main-content">
         <router-view />
       </n-layout-content>
+
+      <AskDrawer />
+      <AiSettingsModal v-model:show="ui.settingsOpen" />
 
       <n-layout-footer bordered class="app-footer">
         <n-p style="text-align: center; margin: 0; color: var(--n-text-color-secondary);">
@@ -28,7 +39,26 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
 import { NConfigProvider, NGlobalStyle, NLayoutHeader, NLayoutContent, NLayoutFooter, NButton, NP } from 'naive-ui'
+import AskDrawer from './components/ai/AskDrawer.vue'
+import AiSettingsModal from './components/journey/AiSettingsModal.vue'
+import { useSettingsStore } from './store/settingsStore'
+import { useUiStore } from './store/uiStore'
+
+const ui = useUiStore()
+const settings = useSettingsStore()
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
+
+function onKey(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    ui.openAsk()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 const themeOverrides = {
   common: {
@@ -82,6 +112,35 @@ const themeOverrides = {
   gap: 8px;
 }
 
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kbd {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.ai-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--n-text-color-disabled);
+}
+
+.ai-dot.on {
+  background: var(--n-success-color);
+}
+
 .brand:hover {
   color: var(--n-primary-color);
 }
@@ -107,6 +166,16 @@ const themeOverrides = {
 
   .brand {
     font-size: 17px;
+  }
+
+  .brand-text,
+  .nav-label,
+  .kbd {
+    display: none;
+  }
+
+  .header-nav {
+    gap: 12px;
   }
 
   .main-content {

@@ -46,7 +46,7 @@
       <n-card v-if="!exerciseRef?.isCorrect && exerciseRef?.isAnswered" size="small" :bordered="true" style="margin-top: 12px; background: var(--n-color-embedded);">
         <n-text strong>Правильный порядок:</n-text>
         <n-ol>
-          <n-li v-for="(item, idx) in correctOrder" :key="idx">{{ item }}</n-li>
+          <n-li v-for="(item, idx) in correctAnswer" :key="idx">{{ item }}</n-li>
         </n-ol>
       </n-card>
     </template>
@@ -82,7 +82,6 @@ const exerciseRef = ref<InstanceType<typeof BaseExercise>>()
 const shuffledSteps = ref<Array<{ id: number; text: string }>>([])
 const dragIndex = ref<number | null>(null)
 const dropIndex = ref<number | null>(null)
-const correctOrder = ref<string[]>([])
 
 const shuffleArray = <T>(array: T[]): T[] => {
   const shuffled = [...array]
@@ -94,7 +93,6 @@ const shuffleArray = <T>(array: T[]): T[] => {
 }
 
 onMounted(() => {
-  correctOrder.value = [...props.steps]
   const stepsWithId = props.steps.map((text, index) => ({ id: index, text }))
   shuffledSteps.value = shuffleArray(stepsWithId)
 })

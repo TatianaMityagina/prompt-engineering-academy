@@ -211,4 +211,6 @@ export interface AiSettings {
   baseUrl: string
   apiKey: string
   model: string
+  /** Пусто — только BM25. */
+  embeddingModel?: string
 }

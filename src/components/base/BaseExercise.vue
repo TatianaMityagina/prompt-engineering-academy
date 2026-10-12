@@ -6,7 +6,8 @@
     :class="{
       'mode-inline': mode === 'inline',
       'mode-test': mode === 'test',
-      'is-answered': isAnswered
+      'is-answered': isAnswered,
+      'is-wrong': isAnswered && !isCorrect
     }"
   >
     <template v-if="title" #header>
@@ -155,6 +156,10 @@ defineExpose({
 
 .base-exercise.is-answered {
   border-left-color: var(--n-success-color);
+}
+
+.base-exercise.is-wrong {
+  border-left-color: var(--n-error-color);
 }
 
 .base-exercise :deep(.n-card-header) {
